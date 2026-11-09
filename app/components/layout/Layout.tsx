@@ -47,6 +47,7 @@ const SIDEBAR_COLLAPSE_KEY = "chat.sidebar.collapsed";
 function routeOwnsToolbar(pathname: string): boolean {
   return (
     pathname === HOME_PATH ||
+    pathname.startsWith("/fit") ||
     isChatPathname(pathname) ||
     pathname === "/database" ||
     pathname.startsWith("/extensions")
@@ -92,6 +93,9 @@ function LayoutShell({ children }: LayoutProps) {
   // Settings brings its own navigation, header, and agent toggle, so it
   // renders full width.
   const settingsOwnsChrome = isSettingsPathname(location.pathname);
+  // Formfit's workspace is its own three-pane layout (bank | form | agent), so
+  // the chat thread rail stays out of the way on /fit.
+  const fitOwnsChrome = location.pathname.startsWith("/fit");
   const chatHomeHandoffActive = useAgentChatHomeHandoff({
     storageKey: "chat",
     activePath: location.pathname,
@@ -172,7 +176,7 @@ function LayoutShell({ children }: LayoutProps) {
   return (
     <HeaderActionsProvider>
       <div className="agent-layout-shell chat-layout-shell flex h-screen w-full overflow-hidden bg-background text-foreground">
-        {settingsOwnsChrome ? null : (
+        {settingsOwnsChrome || fitOwnsChrome ? null : (
           <div
             data-collapsed={sidebarCollapsed ? "true" : "false"}
             className="agent-layout-left-drawer hidden md:block"

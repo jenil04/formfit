@@ -1,9 +1,8 @@
 import { navigateWithAgentChatViewTransition } from "@agent-native/core/client/agent-chat";
-import { useT } from "@agent-native/core/client/i18n";
 import { focusAgentChat } from "@agent-native/toolkit/app/chat";
 import { AgentSidebar } from "@agent-native/toolkit/app/chat";
 import { type ReactNode } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 
 import { ChatComposerContextProvider } from "@/components/ChatComposerContext";
 import { chatThreadPath } from "@/lib/chat-paths";
@@ -22,7 +21,7 @@ export function AgentInspector({
   chatHomeHandoffPending,
 }: AgentInspectorProps) {
   const navigate = useNavigate();
-  const t = useT();
+  const { pathname } = useLocation();
 
   function openAskAgentFullscreen(threadId?: string) {
     focusAgentChat();
@@ -33,18 +32,23 @@ export function AgentInspector({
     <AgentSidebar
       composerContextProvider={ChatComposerContextProvider}
       position="right"
+      defaultOpen={pathname.startsWith("/fit")}
+      defaultSidebarWidth={380}
+      dynamicSuggestions={false}
+      showModelSelector={!pathname.startsWith("/fit")}
       chatViewTransition
       chatViewTransitionHandoff={chatHomeHandoffPending}
       storageKey="chat"
       browserTabId={TAB_ID}
       openOnChatRunning={chatHomeHandoffActive}
       onFullscreenRequest={openAskAgentFullscreen}
-      emptyStateText={t("chat.inspectEmptyState")}
+      emptyStateText="Ask me to fill, shorten or explain any field. I know which form and field you have open."
       agentPageHref="/settings/agent"
       suggestions={[
-        t("chat.inspectSuggestionCapabilities"),
-        t("chat.inspectSuggestionHello"),
-        t("chat.inspectSuggestionAction"),
+        "Fill everything that's safe",
+        "Make this one punchier",
+        "Fit this to 280 characters",
+        "Why is #7 amber?",
       ]}
     >
       {children}
