@@ -29,7 +29,9 @@ export function useNavigationState() {
     requestSource: TAB_ID,
     getNavigationState: ({ pathname, searchParams }) => ({
       ...navigationStateForPath(pathname),
-      ...(searchParams.get("field") ? { fieldId: searchParams.get("field")! } : {}),
+      ...(searchParams.get("field")
+        ? { fieldId: searchParams.get("field")! }
+        : {}),
     }),
     getCommandPath: commandPathForNavigation,
   });
@@ -83,6 +85,7 @@ export function navigationStateForPath(pathname: string): NavigationState {
 function viewForPath(pathname: string): string {
   if (isChatPathname(pathname)) return "chat";
   if (pathname.startsWith("/fit")) return "fit";
+  if (pathname.startsWith("/programs")) return "programs";
   if (pathname === HOME_PATH) return "home";
   if (pathname.startsWith("/database")) return "database";
   if (pathname.startsWith("/extensions")) return "extensions";
@@ -102,6 +105,8 @@ function pathForView(view?: string): string {
       return NEW_CHAT_PATH;
     case "fit":
       return "/fit";
+    case "programs":
+      return "/programs";
     case "home":
       return HOME_PATH;
     case "database":

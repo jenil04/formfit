@@ -48,3 +48,27 @@ export interface Limits {
   charLimit?: number | null;
   wordLimit?: number | null;
 }
+
+export const EVIDENCE_KINDS = ["commit", "pr", "release"] as const;
+export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
+
+/** A citation chip: a bank entry, or a commit / PR / release. */
+export interface Citation {
+  kind: "bank" | EvidenceKind;
+  id: string;
+  label: string;
+  url?: string | undefined;
+  /** Set when the user attached this evidence to one specific sentence. */
+  sentence?: string | undefined;
+}
+
+export interface ClaimResult {
+  sentence: string;
+  supported: boolean;
+  citations: Citation[];
+  /** Why it is amber, e.g. "No commit or bank fact backs 'integrated Stripe'". */
+  reason?: string | undefined;
+  /** Weak keyword matches the user could attach with one click. */
+  suggestions?: Citation[] | undefined;
+  judged: "deterministic" | "llm" | "user";
+}

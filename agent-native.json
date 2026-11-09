@@ -9,7 +9,8 @@
       "ff_bank_entries": "Formfit's public demo is one shared, unauthenticated workspace by design (see server/plugins/auth.ts); the agent has no raw SQL tools (frameworkTools.database is off), so these tables are only reachable through scoped-by-design actions.",
       "ff_forms": "Formfit's public demo is one shared, unauthenticated workspace by design (see server/plugins/auth.ts); the agent has no raw SQL tools (frameworkTools.database is off), so these tables are only reachable through scoped-by-design actions.",
       "ff_fields": "Formfit's public demo is one shared, unauthenticated workspace by design (see server/plugins/auth.ts); the agent has no raw SQL tools (frameworkTools.database is off), so these tables are only reachable through scoped-by-design actions.",
-      "ff_bank_proposals": "Formfit's public demo is one shared, unauthenticated workspace by design (see server/plugins/auth.ts); the agent has no raw SQL tools (frameworkTools.database is off), so these tables are only reachable through scoped-by-design actions."
+      "ff_bank_proposals": "Formfit's public demo is one shared, unauthenticated workspace by design (see server/plugins/auth.ts); the agent has no raw SQL tools (frameworkTools.database is off), so these tables are only reachable through scoped-by-design actions.",
+      "ff_evidence": "Formfit's public demo is one shared, unauthenticated workspace by design (see server/plugins/auth.ts); the agent has no raw SQL tools (frameworkTools.database is off), so these tables are only reachable through scoped-by-design actions."
     }
   }
 }

@@ -4,6 +4,8 @@ import {
 } from "@agent-native/core/client/hooks";
 import {
   IconChevronDown,
+  IconCompass,
+  IconExternalLink,
   IconFileExport,
   IconLoader2,
   IconPlus,
@@ -19,13 +21,15 @@ import { EmptyState } from "./EmptyState";
 import { ExportSheet } from "./ExportSheet";
 import { FieldCard } from "./FieldCard";
 import { NewFormDialog } from "./NewFormDialog";
+import { PasteFields } from "./PasteFields";
+import { ProgramsView } from "./ProgramsView";
 import { ProposalCard } from "./ProposalCard";
 
 import "./fit.css";
 
 const FORM_STATUSES = ["draft", "ready", "submitted"] as const;
 
-export default function Workspace() {
+export default function Workspace({ view }: { view?: "programs" }) {
   const { formId } = useParams();
   const navigate = useNavigate();
   const [sp, setSp] = useSearchParams();
@@ -33,6 +37,7 @@ export default function Workspace() {
 
   const formsQ = useActionQuery("list-forms");
   const bankQ = useActionQuery("list-bank");
+  const evidenceQ = useActionQuery("list-evidence", {});
   const forms = formsQ.data?.forms ?? [];
   const fillAll = useActionMutation("fill-form");
   const setStatus = useActionMutation("set-form-status");
@@ -52,11 +57,11 @@ export default function Workspace() {
 
   // Keep the URL (and so the agent's context) pointing at a real form.
   useEffect(() => {
-    if (!formsQ.isSuccess) return;
+    if (!formsQ.isSuccess || view === "programs") return;
     if (activeId && formId !== activeId)
       navigate(`/fit/${activeId}`, { replace: true });
     if (!activeId && formId) navigate("/fit", { replace: true });
-  }, [formsQ.isSuccess, activeId, formId, navigate]);
+  }, [formsQ.isSuccess, activeId, formId, navigate, view]);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
@@ -147,6 +152,8 @@ export default function Workspace() {
     <div className="ff flex h-full min-h-0 w-full">
       <BankPane
         entries={bankQ.data?.entries ?? []}
+        evidence={evidenceQ.data?.evidence ?? []}
+        evidenceLoading={evidenceQ.isLoading}
         loading={bankQ.isLoading}
         used={used}
         flashId={flashId}
@@ -156,7 +163,11 @@ export default function Workspace() {
             {},
             {
               onSuccess: (r) => {
-                toast.success("Demo reset");
+                toast.success(
+                  r.evidence.source === "sample"
+                    ? "Demo reset (GitHub import failed, loaded sample evidence)"
+                    : "Demo reset",
+                );
                 navigate(`/fit/${r.form.id}`);
               },
               onError: (e) => toast.error(e.message),
@@ -240,8 +251,15 @@ export default function Workspace() {
           >
             <IconPlus size={14} /> New form
           </button>
+          <button
+            className="ff-btn ff-btn-ghost"
+            aria-pressed={view === "programs"}
+            onClick={() => navigate("/programs")}
+          >
+            <IconCompass size={14} /> Programs
+          </button>
           <span style={{ flex: 1 }} />
-          {form ? (
+          {form && view !== "programs" ? (
             <>
               <button className="ff-btn" onClick={() => setExportOpen(true)}>
                 <IconFileExport size={14} /> Copy packet
@@ -267,7 +285,9 @@ export default function Workspace() {
         </div>
 
         <div className="ff-scroll">
-          {loadingFirst ? (
+          {view === "programs" ? (
+            <ProgramsView onStarted={goTo} />
+          ) : loadingFirst ? (
             <div className="ff-doc">
               <div
                 className="ff-shimmer"
@@ -293,6 +313,31 @@ export default function Workspace() {
                   <h1 className="ff-title">{form.title}</h1>
                   {form.description ? (
                     <p className="ff-sub">{form.description}</p>
+                  ) : null}
+                  {form.programId ? (
+                    <p className="ff-meta tnum" style={{ marginTop: 6 }}>
+                      {form.deadline
+                        ? `Closes ${new Date(form.deadline).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+                        : "Rolling deadline"}
+                      {form.sourceUrl ? (
+                        <>
+                          {" · "}
+                          <a
+                            href={form.sourceUrl}
+                            target="_blank"
+                            rel="noreferrer noopener"
+                            style={{
+                              display: "inline-flex",
+                              gap: 3,
+                              alignItems: "center",
+                            }}
+                          >
+                            Open the application page{" "}
+                            <IconExternalLink size={11} />
+                          </a>
+                        </>
+                      ) : null}
+                    </p>
                   ) : null}
                 </div>
                 <div className="ff-seg" role="group" aria-label="Form status">
@@ -370,6 +415,10 @@ export default function Workspace() {
                     ) : null}
                   </div>
                 </div>
+              ) : null}
+
+              {form.fields.length === 0 ? (
+                <PasteFields formId={form.id} />
               ) : null}
 
               {form.fields.map((f) => (

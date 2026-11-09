@@ -48,6 +48,7 @@ function routeOwnsToolbar(pathname: string): boolean {
   return (
     pathname === HOME_PATH ||
     pathname.startsWith("/fit") ||
+    pathname.startsWith("/programs") ||
     isChatPathname(pathname) ||
     pathname === "/database" ||
     pathname.startsWith("/extensions")
@@ -95,7 +96,9 @@ function LayoutShell({ children }: LayoutProps) {
   const settingsOwnsChrome = isSettingsPathname(location.pathname);
   // Formfit's workspace is its own three-pane layout (bank | form | agent), so
   // the chat thread rail stays out of the way on /fit.
-  const fitOwnsChrome = location.pathname.startsWith("/fit");
+  const fitOwnsChrome =
+    location.pathname.startsWith("/fit") ||
+    location.pathname.startsWith("/programs");
   const chatHomeHandoffActive = useAgentChatHomeHandoff({
     storageKey: "chat",
     activePath: location.pathname,

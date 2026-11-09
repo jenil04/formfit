@@ -65,6 +65,21 @@ export function ExportSheet({
                 : "Every field has an answer."
               : "Building packet…"}
           </p>
+          {packet && packet.warnings.length > 0 ? (
+            <div
+              className="ff-reason"
+              style={{ marginLeft: 0, marginTop: 12 }}
+              role="alert"
+            >
+              <span>
+                <b>
+                  {packet.warnings.length} unsupported claim
+                  {packet.warnings.length > 1 ? "s" : ""}.
+                </b>{" "}
+                {packet.warnings.join(" · ")}
+              </span>
+            </div>
+          ) : null}
           <div style={{ marginTop: 14, display: "grid", gap: 8 }}>
             {packet?.rows.map((r) => (
               <div

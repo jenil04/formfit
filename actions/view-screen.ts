@@ -5,6 +5,7 @@ import { z } from "zod";
 import {
   getFormDTO,
   listBank,
+  listEvidence,
   listFormSummaries,
 } from "../server/lib/formfit/store.js";
 import { measure } from "../shared/fit.js";
@@ -17,8 +18,7 @@ export default defineAction({
   readOnly: true,
   run: async () => {
     const navigation = (await readAppState("navigation")) as
-      | (Record<string, unknown> & { formId?: string; fieldId?: string })
-      | null;
+      (Record<string, unknown> & { formId?: string; fieldId?: string }) | null;
     const screen: Record<string, unknown> = {};
     if (navigation) screen.navigation = navigation;
 
@@ -28,6 +28,17 @@ export default defineAction({
       topic: e.topic,
       facts: e.facts.map((f) => f.key),
     }));
+
+    const evidence = await listEvidence();
+    screen.evidence = {
+      total: evidence.length,
+      recent: evidence.slice(0, 15).map((e) => ({
+        id: e.id,
+        kind: e.kind,
+        title: e.title,
+        date: e.date.slice(0, 10),
+      })),
+    };
 
     let formId = navigation?.formId;
     if (!formId) formId = (await listFormSummaries())[0]?.id;
@@ -50,6 +61,7 @@ export default defineAction({
               ? `${f.words}/${f.wordLimit} words`
               : null,
           needsReason: f.needsReason,
+          unsupportedClaims: f.claims.filter((c) => !c.supported).length,
         })),
         pendingProposals: form.proposals.map((p) => ({
           id: p.id,

@@ -77,6 +77,29 @@ CREATE TABLE IF NOT EXISTS ff_bank_proposals (
   created_at TEXT NOT NULL
 )`,
     },
+    {
+      version: 2,
+      name: "formfit-evidence-programs-claims",
+      sql: `CREATE TABLE IF NOT EXISTS ff_evidence (
+  id TEXT PRIMARY KEY,
+  repo TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  title TEXT NOT NULL,
+  date TEXT NOT NULL DEFAULT '',
+  url TEXT NOT NULL DEFAULT '',
+  sha TEXT,
+  fictional INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ff_evidence_repo_idx ON ff_evidence (repo, date);
+ALTER TABLE ff_forms ADD COLUMN IF NOT EXISTS program_id TEXT;
+ALTER TABLE ff_forms ADD COLUMN IF NOT EXISTS organizer TEXT;
+ALTER TABLE ff_forms ADD COLUMN IF NOT EXISTS money TEXT;
+ALTER TABLE ff_forms ADD COLUMN IF NOT EXISTS deadline TEXT;
+ALTER TABLE ff_forms ADD COLUMN IF NOT EXISTS source_url TEXT;
+ALTER TABLE ff_fields ADD COLUMN IF NOT EXISTS citations TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE ff_fields ADD COLUMN IF NOT EXISTS claims TEXT NOT NULL DEFAULT '[]'`,
+    },
   ],
   { table: "formfit_migrations" },
 );

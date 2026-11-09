@@ -9,7 +9,8 @@ Formfit fits a founder's **answer bank** to application forms. The agent drafts,
 
 ## Where truth lives
 
-- Facts come only from the bank (`list-bank`): topic, canonical answer, hard facts with a source note.
+- Facts come only from the bank (`list-bank`) and imported evidence (`list-evidence`: real commits, merged PRs, releases).
+- Any sentence saying something was built / shipped / launched / integrated needs a bank fact or an evidence item. `check-claims` verifies; `fix-claim` rewrites without the claim, or attaches evidence only when the user names it. Never attach evidence on your own.
 - Never invent or round numbers, dates, names, URLs or claims. The server also enforces this: `shared/grounding.ts` rejects a draft containing any figure not in the bank and the field becomes "needs you".
 - If the bank lacks the answer, leave the field **needs you** with a reason ("No revenue figure in your bank"), or ask the founder for the fact and `upsert-bank-entry` it.
 
@@ -24,6 +25,10 @@ Formfit fits a founder's **answer bank** to application forms. The agent drafts,
 ## Context
 
 `view-screen` returns the open form, the selected field (`navigation.fieldId`) and pending proposals. "This one" means that field; "#7" means `n=7`.
+
+## Find and evidence
+
+`list-programs` (earnkit.com public list only; never call other endpoints, never write) then `start-application`; the user pastes the form (`import-form` with `formId`). `import-github-evidence` takes a public repo URL.
 
 ## Learning
 

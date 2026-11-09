@@ -4,7 +4,7 @@ import { checkAndCountLlmRequest } from "../lib/formfit/rate-limit.js";
 
 // LLM-backed entry points: the drafting/learning actions and the agent chat.
 const GUARDED = [
-  /^\/_agent-native\/actions\/(fill-field|fill-form|learn-from-edit)$/,
+  /^\/_agent-native\/actions\/(fill-field|fill-form|learn-from-edit|check-claims|fix-claim)$/,
   /^\/_agent-native\/agent-chat$/,
 ];
 

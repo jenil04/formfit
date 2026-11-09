@@ -31,6 +31,13 @@ export default defineAction({
         required: f.required,
         overLimit: m.over,
         reason: f.status === "needs_you" ? f.needsReason : null,
+        sources: f.citations.map((c) => ({
+          label: c.label,
+          url: c.url ?? null,
+        })),
+        unsupportedClaims: f.claims
+          .filter((c) => !c.supported)
+          .map((c) => c.sentence),
       };
     });
     const todo = rows.filter(
@@ -53,6 +60,27 @@ export default defineAction({
         return `${r.n}. ${r.label}${r.required ? " *" : ""}${limit}\n${body}\n`;
       }),
     ].join("\n");
+    const sources = [
+      ...new Map(
+        form.fields.flatMap((f) => f.citations).map((c) => [c.id, c]),
+      ).values(),
+    ];
+    const warnings = rows.flatMap((r) =>
+      r.unsupportedClaims.map(
+        (s) => `#${r.n}: no commit or bank fact backs "${s}"`,
+      ),
+    );
+    const fullText = [
+      text,
+      warnings.length
+        ? `WARNINGS (unsupported claims, fix before submitting)\n${warnings.map((w) => `- ${w}`).join("\n")}\n`
+        : "",
+      sources.length
+        ? `EVIDENCE CITED\n${sources.map((c) => `- ${c.label}${c.url ? ` ${c.url}` : ""}`).join("\n")}\n`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
     return {
       formId,
       title: form.title,
@@ -60,7 +88,9 @@ export default defineAction({
       needsYou: form.needsYou,
       rows,
       todo: todo.map((r) => ({ n: r.n, label: r.label, reason: r.reason })),
-      text,
+      warnings,
+      sources,
+      text: fullText,
     };
   },
 });

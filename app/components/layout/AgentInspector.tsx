@@ -28,14 +28,17 @@ export function AgentInspector({
     navigateWithAgentChatViewTransition(navigate, chatThreadPath(threadId));
   }
 
+  const isFitPath =
+    pathname.startsWith("/fit") || pathname.startsWith("/programs");
+
   return (
     <AgentSidebar
       composerContextProvider={ChatComposerContextProvider}
       position="right"
-      defaultOpen={pathname.startsWith("/fit")}
+      defaultOpen={isFitPath}
       defaultSidebarWidth={380}
       dynamicSuggestions={false}
-      showModelSelector={!pathname.startsWith("/fit")}
+      showModelSelector={!isFitPath}
       chatViewTransition
       chatViewTransitionHandoff={chatHomeHandoffPending}
       storageKey="chat"

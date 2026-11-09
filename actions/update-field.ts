@@ -1,6 +1,7 @@
 import { defineAction, fail } from "@agent-native/core/action";
 import { z } from "zod";
 
+import { refreshClaims } from "../server/lib/formfit/claims.js";
 import { getFieldDTO, patchFieldRow } from "../server/lib/formfit/store.js";
 import { classifyField } from "../shared/classifier.js";
 import { FIELD_KINDS } from "../shared/types.js";
@@ -83,7 +84,11 @@ export default defineAction({
       patch.status =
         answer.trim() === f.draft.trim() && f.draft ? "drafted" : "edited";
     }
-    const field = await patchFieldRow(args.fieldId, patch);
+    let field = await patchFieldRow(args.fieldId, patch);
+    // Keep claim highlights truthful the moment the text changes (no model call;
+    // the UI follows with check-claims for the ambiguous sentences).
+    if (args.answer !== undefined && args.answer !== f.answer)
+      field = (await refreshClaims(args.fieldId)).field;
     return { field };
   },
 });

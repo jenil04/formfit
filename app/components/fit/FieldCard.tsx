@@ -13,6 +13,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import type { FieldDTO } from "../../../server/lib/formfit/store";
+import { CitationChip } from "./CitationChip";
+import { ClaimsPanel } from "./ClaimsPanel";
 
 const STATUS_LABEL: Record<string, string> = {
   empty: "Empty",
@@ -71,6 +73,7 @@ export function FieldCard({
   const update = useActionMutation("update-field");
   const refit = useActionMutation("fill-field");
   const learn = useActionMutation("learn-from-edit");
+  const check = useActionMutation("check-claims");
 
   // Pull in server changes (agent edits, fills) unless the user is typing.
   useEffect(() => {
@@ -107,6 +110,9 @@ export function FieldCard({
       { fieldId: field.id, answer: next },
       {
         onSuccess: () => {
+          // Re-verify claims after every manual edit (the model only judges ambiguous sentences).
+          if (next.trim() && !field.sensitiveCategory)
+            check.mutate({ fieldId: field.id });
           // A changed draft is a lesson: ask for a bank update, silently.
           if (
             field.draft &&
@@ -235,6 +241,15 @@ export function FieldCard({
         )}
       </div>
 
+      {!busy ? (
+        <ClaimsPanel
+          fieldId={field.id}
+          claims={field.claims}
+          checking={check.isPending}
+          onBank={onProvenanceClick}
+        />
+      ) : null}
+
       <footer className="ff-field-foot">
         {field.charLimit || field.wordLimit ? (
           <div className={`ff-meter ${live.tone} tnum`} aria-live="polite">
@@ -268,6 +283,10 @@ export function FieldCard({
           </button>
         ))}
 
+        {field.citations.map((c) => (
+          <CitationChip key={`${c.id}:${c.sentence ?? ""}`} c={c} />
+        ))}
+
         <div className="ff-actions">
           {!field.sensitiveCategory ? (
             <button
@@ -278,7 +297,7 @@ export function FieldCard({
                 e.stopPropagation();
                 redraft();
               }}
-              title="Draft again from your bank"
+              title="Draft again from your bank and evidence"
             >
               {refitting ? (
                 <IconLoader2 size={13} className="ff-spin" />

@@ -4,8 +4,12 @@ import { classifyField } from "../../../shared/classifier.js";
 import { measure } from "../../../shared/fit.js";
 import type { ParsedForm } from "../../../shared/parser.js";
 import { SEED_BANK } from "../../../shared/seed.js";
+import type { EvidenceDraft } from "../../../shared/github.js";
 import type {
   BankFact,
+  Citation,
+  ClaimResult,
+  EvidenceKind,
   FieldKind,
   FieldStatus,
   FormStatus,
@@ -149,6 +153,8 @@ export interface FieldDTO {
   draft: string;
   answer: string;
   provenance: Provenance[];
+  citations: Citation[];
+  claims: ClaimResult[];
   chars: number;
   words: number;
   over: boolean;
@@ -177,11 +183,17 @@ export interface FormSummary {
   needsYou: number;
   filled: number;
   ready: number;
+  unsupported: number;
   updatedAt: string;
 }
 
 export interface FormDTO extends FormSummary {
   description: string;
+  programId: string | null;
+  organizer: string | null;
+  money: string | null;
+  deadline: string | null;
+  sourceUrl: string | null;
   fields: FieldDTO[];
   proposals: ProposalDTO[];
 }
@@ -208,6 +220,8 @@ function toField(row: typeof schema.fields.$inferSelect): FieldDTO {
     draft: row.draft,
     answer: row.answer,
     provenance: parseJson<Provenance[]>(row.provenance, []),
+    citations: parseJson<Citation[]>(row.citations, []),
+    claims: parseJson<ClaimResult[]>(row.claims, []),
     chars: m.chars,
     words: m.words,
     over: m.over,
@@ -228,6 +242,10 @@ function summarize(
     filled: fields.filter((f) => f.answer.trim() && f.status !== "needs_you")
       .length,
     ready: fields.filter((f) => f.status === "ready").length,
+    unsupported: fields.reduce(
+      (n, f) => n + f.claims.filter((c) => !c.supported).length,
+      0,
+    ),
     updatedAt: form.updatedAt,
   };
 }
@@ -275,6 +293,11 @@ export async function getFormDTO(id: string): Promise<FormDTO | null> {
   return {
     ...summarize(form, fields),
     description: form.description,
+    programId: form.programId,
+    organizer: form.organizer,
+    money: form.money,
+    deadline: form.deadline,
+    sourceUrl: form.sourceUrl,
     fields,
     proposals: props.map((p) => ({
       id: p.id,
@@ -304,6 +327,15 @@ export async function createForm(input: {
   parsed: ParsedForm;
   sourceText: string;
   title?: string | undefined;
+  program?:
+    | {
+        programId: string;
+        organizer: string | null;
+        money: string | null;
+        deadline: string | null;
+        sourceUrl: string | null;
+      }
+    | undefined;
 }): Promise<FormDTO> {
   const db = getDb();
   const now = nowIso();
@@ -314,11 +346,42 @@ export async function createForm(input: {
     description: input.parsed.description,
     sourceText: input.sourceText,
     status: "draft",
+    ...(input.program ?? {}),
     createdAt: now,
     updatedAt: now,
   });
-  let position = 0;
-  for (const f of input.parsed.fields) {
+  await insertFields(id, input.parsed, 0);
+  return (await getFormDTO(id))!;
+}
+
+/** Append parsed fields to an existing form (used when pasting fields into a program-started form). */
+export async function addFieldsToForm(
+  formId: string,
+  parsed: ParsedForm,
+  sourceText: string,
+): Promise<FormDTO> {
+  const db = getDb();
+  const existing = await db
+    .select()
+    .from(schema.fields)
+    .where(eq(schema.fields.formId, formId));
+  await insertFields(formId, parsed, existing.length);
+  await db
+    .update(schema.forms)
+    .set({ sourceText, updatedAt: nowIso() })
+    .where(eq(schema.forms.id, formId));
+  return (await getFormDTO(formId))!;
+}
+
+async function insertFields(
+  id: string,
+  parsed: ParsedForm,
+  startAt: number,
+): Promise<void> {
+  const db = getDb();
+  const now = nowIso();
+  let position = startAt;
+  for (const f of parsed.fields) {
     const c = classifyField({ label: f.label, help: f.help, kind: f.kind });
     await db.insert(schema.fields).values({
       id: newId("fld"),
@@ -338,7 +401,6 @@ export async function createForm(input: {
       updatedAt: now,
     });
   }
-  return (await getFormDTO(id))!;
 }
 
 export async function deleteForm(id: string): Promise<void> {
@@ -375,4 +437,80 @@ export async function wipeAll(): Promise<void> {
   await db.delete(schema.fields);
   await db.delete(schema.forms);
   await db.delete(schema.bankEntries);
+  await db.delete(schema.evidence);
+}
+
+// ---------- Evidence ----------
+
+export interface EvidenceDTO {
+  id: string;
+  repo: string;
+  kind: EvidenceKind;
+  title: string;
+  date: string;
+  url: string;
+  sha: string | null;
+  fictional: boolean;
+}
+
+function toEvidence(row: typeof schema.evidence.$inferSelect): EvidenceDTO {
+  return {
+    id: row.id,
+    repo: row.repo,
+    kind: row.kind,
+    title: row.title,
+    date: row.date,
+    url: row.url,
+    sha: row.sha,
+    fictional: row.fictional === 1,
+  };
+}
+
+export async function listEvidence(repo?: string): Promise<EvidenceDTO[]> {
+  const q = getDb().select().from(schema.evidence);
+  const rows = await (
+    repo ? q.where(eq(schema.evidence.repo, repo)) : q
+  ).orderBy(desc(schema.evidence.date));
+  return rows.map(toEvidence);
+}
+
+/** Idempotent: re-importing the same repo refreshes rows instead of duplicating them. */
+export async function saveEvidence(
+  items: EvidenceDraft[],
+  fictional = false,
+): Promise<{ added: number; updated: number }> {
+  const db = getDb();
+  const have = new Set((await listEvidence()).map((e) => e.id));
+  let added = 0;
+  let updated = 0;
+  for (const e of items) {
+    const row = {
+      repo: e.repo,
+      kind: e.kind,
+      title: e.title,
+      date: e.date,
+      url: e.url,
+      sha: e.sha,
+      fictional: fictional ? 1 : 0,
+    };
+    if (have.has(e.id)) {
+      await db
+        .update(schema.evidence)
+        .set(row)
+        .where(eq(schema.evidence.id, e.id));
+      updated += 1;
+    } else {
+      await db
+        .insert(schema.evidence)
+        .values({ id: e.id, ...row, createdAt: nowIso() });
+      added += 1;
+    }
+  }
+  return { added, updated };
+}
+
+export async function removeEvidence(repo: string): Promise<number> {
+  const n = (await listEvidence(repo)).length;
+  await getDb().delete(schema.evidence).where(eq(schema.evidence.repo, repo));
+  return n;
 }

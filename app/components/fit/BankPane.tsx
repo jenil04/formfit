@@ -10,10 +10,16 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
-import type { BankEntryDTO } from "../../../server/lib/formfit/store";
+import type {
+  BankEntryDTO,
+  EvidenceDTO,
+} from "../../../server/lib/formfit/store";
+import { EvidencePane } from "./EvidencePane";
 
 interface Props {
   entries: BankEntryDTO[];
+  evidence: EvidenceDTO[];
+  evidenceLoading: boolean;
   loading: boolean;
   /** entryId -> factKeys used by the selected field */
   used: Map<string, Set<string>>;
@@ -24,6 +30,8 @@ interface Props {
 
 export function BankPane({
   entries,
+  evidence,
+  evidenceLoading,
   loading,
   used,
   flashId,
@@ -31,6 +39,7 @@ export function BankPane({
   resetting,
 }: Props) {
   const [adding, setAdding] = useState(false);
+  const [tab, setTab] = useState<"bank" | "evidence">("bank");
   const [confirmReset, setConfirmReset] = useState(false);
   return (
     <aside className="ff-bank" aria-label="Answer bank">
@@ -55,19 +64,37 @@ export function BankPane({
           Formfit
         </div>
         <span style={{ flex: 1 }} />
-        <span className="ff-section-label tnum">
-          Answer bank · {entries.length}
-        </span>
+        {tab === "bank" ? (
+          <button
+            className="ff-btn ff-icon-btn"
+            title="New bank entry"
+            aria-label="New bank entry"
+            onClick={() => setAdding((v) => !v)}
+          >
+            <IconPlus size={14} />
+          </button>
+        ) : null}
+      </div>
+      <div className="ff-tabs" role="tablist" aria-label="Sources">
         <button
-          className="ff-btn ff-icon-btn"
-          title="New bank entry"
-          aria-label="New bank entry"
-          onClick={() => setAdding((v) => !v)}
+          role="tab"
+          aria-selected={tab === "bank"}
+          onClick={() => setTab("bank")}
         >
-          <IconPlus size={14} />
+          Answer bank <span className="tnum">{entries.length}</span>
+        </button>
+        <button
+          role="tab"
+          aria-selected={tab === "evidence"}
+          onClick={() => setTab("evidence")}
+        >
+          Evidence <span className="tnum">{evidence.length}</span>
         </button>
       </div>
-      <div className="ff-bank-scroll">
+      {tab === "evidence" ? (
+        <EvidencePane evidence={evidence} loading={evidenceLoading} />
+      ) : null}
+      <div className="ff-bank-scroll" hidden={tab !== "bank"}>
         {adding ? <EntryEditor onDone={() => setAdding(false)} /> : null}
         {loading && entries.length === 0 ? (
           <>
@@ -107,7 +134,7 @@ export function BankPane({
         ))}
       </div>
       <div className="ff-bank-foot">
-        <span>Drafts use only what's here.</span>
+        <span>Drafts use only the bank and your evidence.</span>
         {confirmReset ? (
           <span style={{ display: "flex", gap: 4 }}>
             <button

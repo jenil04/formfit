@@ -1,8 +1,10 @@
 # Formfit
 
-**Your answer bank, fitted to every form. The agent drafts, you edit, it learns.**
+**Applications where every claim cites what you actually shipped.**
 
-Formfit keeps a founder's best answers in one place, then drafts every field of any application form from that bank, fitted to the exact character limit, without inventing a single number. Fields only a human can answer (wallet address, phone, KYC, legal terms) are never auto-filled; they turn amber with the reason.
+An evidence-backed application studio: find a program, paste its form, import your GitHub work, and the agent drafts every field from your answer bank and your real commits, PRs and releases. Anything it can't back turns amber.
+
+Formfit keeps a founder's best answers in one place (plus the commits, merged PRs and releases they have really shipped), then drafts every field of any application form from that bank, fitted to the exact character limit, without inventing a single number. Fields only a human can answer (wallet address, phone, KYC, legal terms) are never auto-filled; they turn amber with the reason.
 
 Built for the Builder.io Agent-Native Hackathon on the [Agent-Native](https://github.com/BuilderIO/agent-native) framework.
 
@@ -44,14 +46,15 @@ Loopio, Responsive and Grantable are established products and this is a hackatho
 
 ## 2-minute demo path
 
-1. **Open the app.** It lands straight in a shared demo workspace, no sign-up. Three panes: answer bank (left), form (center), agent (right).
-2. **Click "Load sample founder + form".** The fictional startup *Tidewell* gets a bank of 11 entries and the *Lumen Accelerator* form is imported: 16 fields, limits parsed, **4 already amber** (phone, funding terms, date of birth, terms checkbox).
-3. **Click "Fill 12 safe fields".** Fields drafted from the bank land one by one, each with a live character meter (green, amber near the limit, red over) and **provenance chips** naming the bank entries and facts used. Click a field and the bank pane lights up the entries it used.
-4. **Look at #7, "monthly recurring revenue".** It is amber: *"No revenue figure in your bank."* The agent did not invent one.
-5. **Edit the traction answer.** Add a fact the bank doesn't have ("two pilots renewed after their first month") and click away. A small diff appears: *Learn from your edit*. Click **Add to bank** and the traction entry updates, visibly.
-6. **Paste your own form.** *New form*, paste messy text (labels, "(max 500 characters)", "Required", dropdown options). The preview shows what the parser found, live.
-7. **Ask the agent.** With a field selected: *"make this one punchier"*, *"fit this to 280"*, *"why is #7 amber?"*, *"fill everything that's safe"*. It knows which form and field you have open.
-8. **Copy packet.** Per-field Copy buttons, a status per field, and a whole-form copy. Mark the form Draft / Ready / Submitted. **Reset demo** (bottom of the bank pane) restores the starting state.
+1. **Pick a program.** Open **Programs** (topbar). Open programs from earnkit.com's public list, ranked by deadline, with the money on offer. Click **Start application**: a form is created with the name, deadline and link filled in.
+2. **Paste the form.** Copy the questions from the program's application page into the box (labels, "(max 500 characters)", "Required"). The preview shows what the parser found; sensitive fields (wallet, phone, KYC, legal) are amber at once. *No page handy? "Load sample founder + form" on the empty state gives you the Tidewell bank, the Lumen form and sample evidence.*
+3. **Import GitHub evidence.** Left pane, **Evidence** tab. The input is prefilled with `https://github.com/jenil04/formfit`. Import: commits (max 100), merged PRs and releases appear with dates, short shas and links.
+4. **Fill.** **Fill N safe fields.** Each draft carries chips: bank entries *and* commits / PRs / releases (click to open on GitHub). Under the text, every "we built / shipped / launched" sentence is listed with its source.
+5. **Edit, and get an amber unsupported claim.** Add "We integrated Stripe payments." to an answer and click away. Claims re-check on every manual edit: that sentence turns amber, *"No commit or bank fact backs 'integrated Stripe'"*.
+6. **Fix.** One click: the agent rewrites the answer without the claim. Or **Attach evidence** and pick the commit that really backs it.
+7. **Export.** **Copy packet**: per-field answers, any remaining unsupported claims as warnings, and the evidence cited.
+
+The agent does all of this too: *"find me a program closing soon"*, *"import github.com/me/repo"*, *"check my claims on #7"*, *"fix it"*. **Reset demo** restores the starting state.
 
 ## How it uses Agent-Native
 
@@ -62,7 +65,7 @@ Everything the app does is a `defineAction` in [`actions/`](actions). The UI cal
 | `list-bank` | The answer bank | bank pane | yes | yes |
 | `upsert-bank-entry` | Create / edit an entry and its facts | bank editor | yes | yes |
 | `delete-bank-entry` | Remove an entry | bank editor | yes | yes |
-| `import-form` | Pasted text to structured fields (deterministic parser) | New form dialog | yes | yes |
+| `import-form` | Pasted text to structured fields (deterministic parser); with `formId`, adds them to a program-started form | New form dialog, paste box | yes | yes |
 | `list-forms` / `get-form` | Forms, fields, proposals | switcher, workspace | yes | yes |
 | `delete-form` | Remove a form | switcher | yes | yes |
 | `fill-field` | Draft one field, fitted; `instruction` and `targetChars` for "punchier" / "fit to 280" | Draft / Redraft | yes | yes |
@@ -74,11 +77,17 @@ Everything the app does is a `defineAction` in [`actions/`](actions). The UI cal
 | `export-packet` | Copy-paste packet with counts and status | Copy packet | yes | yes |
 | `set-form-status` | draft / ready / submitted (refuses ready while required fields are open) | status control | yes | yes |
 | `load-sample` / `reset-demo` | First-run sample and demo reset | empty state, Reset demo | yes | yes |
+| `import-github-evidence` | Public repo URL to commits (max 100), merged PRs, releases as evidence | Evidence tab | yes | yes |
+| `list-evidence` / `delete-evidence` | Read / clear imported evidence | Evidence tab | yes | yes |
+| `check-claims` | Re-verify a field's claims against evidence and bank; amber with a reason | automatic after an edit | yes | yes |
+| `fix-claim` | Rewrite without the claim, or attach evidence to it | Fix / Attach evidence | yes | yes |
+| `list-programs` | Open programs ranked by deadline (earnkit.com public list, 1h cache, bundled fallback) | Programs view | yes | yes |
+| `start-application` | Create a form from a program (name, link, deadline, money) | Start application | yes | yes |
 | `view-screen` | What the user is looking at | n/a | yes | agent only |
 
 **Context awareness.** The route is `/fit/:formId?field=:fieldId`. `use-navigation-state` publishes `formId` and `fieldId` to application state on every navigation. `view-screen` reads it and returns the open form, the *selected field* in full, pending proposals and a bank summary. That is how "make this one punchier" and "why is #7 amber?" resolve without the user pasting anything. The agent can also move the UI with `navigate` (`/fit/<id>?field=<id>`).
 
-**Shared state.** Data lives in SQL (`ff_bank_entries`, `ff_forms`, `ff_fields`, `ff_bank_proposals`). Agent writes show up in the UI through the framework's change sync, and UI edits are visible to the agent on its next `view-screen`.
+**Shared state.** Data lives in SQL (`ff_bank_entries`, `ff_forms`, `ff_fields`, `ff_bank_proposals`, `ff_evidence`). Agent writes show up in the UI through the framework's change sync, and UI edits are visible to the agent on its next `view-screen`.
 
 **Agent skill and system prompt.** [`server/plugins/agent-chat.ts`](server/plugins/agent-chat.ts) carries the guardrails and intent-to-action mapping; [`.agents/skills/formfit-guardrails`](.agents/skills/formfit-guardrails/SKILL.md) is the same in skill form. The in-app agent and drafting both use `claude-sonnet-5-5`.
 
@@ -89,20 +98,21 @@ Rules are enforced in code, not only in prompts.
 1. **Grounded numbers.** [`shared/grounding.ts`](shared/grounding.ts) extracts every figure from a draft (handling `$`, commas, `k/m/b`, `%`) and rejects the draft if any is absent from the bank. The model gets one retry with feedback; after that the field is "needs you" with the offending figures named.
 2. **Sensitive fields never reach the model.** [`shared/classifier.ts`](shared/classifier.ts) flags wallet/payout address, phone, government ID/KYC/passport, tax ID (EIN/PAN), home/street address, date of birth, bank/card, legal terms/consent/signature/"I agree" (and every checkbox), equity/investment terms and references' contact info. They are classified at import, shown amber with a reason, skipped by `fill-form`, and never learned into the bank.
 3. **Never exceeds a limit.** [`shared/fit.ts`](shared/fit.ts) counts characters and words server-side, asks the model to aim for ~92% of the limit, re-fits up to twice, then hard-trims at a sentence or word boundary. The result is guaranteed to fit.
-4. **Provenance.** Drafts must cite bank entries and facts; citations are validated against real ids. A draft that cites nothing is rejected.
+4. **Provenance.** Drafts must cite bank entries and facts and/or evidence items; citations are validated against real ids. A draft that cites nothing is rejected.
+4b. **Claims cite evidence.** [`shared/claims.ts`](shared/claims.ts) (unit tested) finds sentences with a claim verb (built, shipped, launched, integrated, released...) and checks keyword overlap with evidence titles and bank entries. Clear matches are backed in code. Only ambiguous sentences go to one LLM judgment, which may cite only real sources that share a keyword with the sentence. Everything else is amber with a reason and a Fix. Drafting retries twice to back its claims, then keeps the draft with the claim flagged rather than hiding it.
 5. **Exact-value kinds.** Select answers must be one of the options; URL and email answers must appear in the bank.
-6. **Demo cost caps.** 60 LLM-backed requests per hour per IP and a global cap of 400 per day (`server/middleware/llm-guard.ts`), returning a friendly 429 message; plus a hard daily ceiling on raw model calls. In memory, reset on restart.
+6. **Demo cost caps.** 60 LLM-backed requests per hour per IP (drafting, learning, check-claims, fix-claim) and a global cap of 400 per day (`server/middleware/llm-guard.ts`), returning a friendly 429 message; plus a hard daily ceiling on raw model calls. In memory, reset on restart.
 7. **Locked-down agent surface** for the shared demo: raw SQL tools, extensions, connectors and code execution are off; the app's actions are the only data path.
 
 ## Architecture
 
 ```
-app/components/fit/   Workspace (3 panes), BankPane, FieldCard, ProposalCard (diff), dialogs
+app/components/fit/   Workspace (3 panes), BankPane + EvidencePane, ProgramsView, FieldCard + ClaimsPanel, ProposalCard (diff), dialogs
 app/routes/fit.($formId).tsx
-actions/              16 defineAction files, shared by UI / agent / HTTP
+actions/              23 defineAction files, shared by UI / agent / HTTP
 shared/               pure TS, unit tested, imported by server AND client:
-                      parser.ts  classifier.ts  fit.ts  grounding.ts  seed.ts  samples.ts
-server/lib/formfit/   store (SQL), fill (drafting + guardrails), learn (proposals), llm, rate-limit
+                      parser.ts  classifier.ts  fit.ts  grounding.ts  claims.ts  github.ts  programs.ts  seed*.ts  samples.ts
+server/lib/formfit/   store (SQL), fill (drafting + guardrails), claims (verify + fix), github, programs, learn (proposals), llm, rate-limit
 server/db/schema.ts   Drizzle tables; server/plugins/db.ts migrations
 server/middleware/llm-guard.ts   per-IP / global LLM request caps
 server/plugins/       agent-chat (model, prompt, tool surface), auth (guest), local-runtime
@@ -117,7 +127,8 @@ export COREPACK_HOME=$HOME/.cache/corepack
 pnpm install
 export ANTHROPIC_API_KEY=...     # drafting and the in-app agent
 pnpm dev                          # prints the local URL; dev signs you in automatically
-pnpm test                         # parser, classifier, fitting, grounding, rate limit
+export GITHUB_TOKEN=...          # optional; only raises GitHub's 60 requests/hour unauthenticated limit
+pnpm test                         # parser, classifier, fitting, grounding, claims, github, programs, rate limit
 pnpm typecheck
 ```
 
@@ -146,7 +157,10 @@ The demo founder and startup ("Tidewell", Asha Rivera, Leo Tanaka) and both samp
 - Single shared workspace; no per-user banks or sharing.
 - Rate limits are in memory and per process.
 - No file/PDF import and no browser extension to fill the live page; the output is a copy-paste packet.
-- Grounding checks figures, not names or qualitative claims; those rely on the prompt and on provenance.
+- Grounding checks figures; claim checking is keyword overlap plus an LLM judgment on ambiguous sentences. It catches "we integrated Stripe" with no Stripe commit, not a subtly overstated claim whose keywords all match. A human still reads the packet.
+- Evidence is public GitHub only (no private repos, no OAuth); GitHub's unauthenticated limit is 60 requests/hour, and an import uses 3.
+- Programs come from earnkit.com's public read-only list (GET /api/programs only; nothing is ever written there), cached for an hour, with a small bundled snapshot as fallback. Formfit does not submit applications.
+- The demo seed imports real evidence from `jenil04/formfit`; only if that import fails does it load a small fictional Tidewell set (flagged "sample data").
 
 ## License
 

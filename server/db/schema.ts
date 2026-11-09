@@ -22,6 +22,12 @@ export const forms = table("ff_forms", {
   status: text("status", { enum: ["draft", "ready", "submitted"] })
     .notNull()
     .default("draft"),
+  // Set when the form was started from a program (the "find" step).
+  programId: text("program_id"),
+  organizer: text("organizer"),
+  money: text("money"),
+  deadline: text("deadline"),
+  sourceUrl: text("source_url"),
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
@@ -43,6 +49,8 @@ export const fields = table("ff_fields", {
   draft: text("draft").notNull().default(""), // last AI draft, kept for learn-from-edit
   answer: text("answer").notNull().default(""), // what the user would paste
   provenance: text("provenance").notNull().default("[]"), // JSON Provenance[]
+  citations: text("citations").notNull().default("[]"), // JSON Citation[] (evidence cited / attached)
+  claims: text("claims").notNull().default("[]"), // JSON ClaimResult[]
   createdAt: text("created_at").notNull(),
   updatedAt: text("updated_at").notNull(),
 });
@@ -60,5 +68,18 @@ export const proposals = table("ff_bank_proposals", {
   status: text("status", { enum: ["pending", "accepted", "dismissed"] })
     .notNull()
     .default("pending"),
+  createdAt: text("created_at").notNull(),
+});
+
+// Real shipped work: commits, merged PRs and releases imported from GitHub.
+export const evidence = table("ff_evidence", {
+  id: text("id").primaryKey(), // kind:owner/repo:sha|number|tag
+  repo: text("repo").notNull(),
+  kind: text("kind", { enum: ["commit", "pr", "release"] }).notNull(),
+  title: text("title").notNull(),
+  date: text("date").notNull().default(""),
+  url: text("url").notNull().default(""),
+  sha: text("sha"), // short sha for commits, "#12" for PRs
+  fictional: integer("fictional").notNull().default(0), // demo fallback set
   createdAt: text("created_at").notNull(),
 });
