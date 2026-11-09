@@ -33,7 +33,11 @@ const cases: Array<[string, string, string | null, FieldKind?]> = [
   ["How do you plan to use the funds?", "", null],
   ["Use of funds", "", null],
   ["Describe your traction", "", null],
-  ["Describe your company in one sentence.", "By submitting you agree to our terms.", null],
+  [
+    "Describe your company in one sentence.",
+    "By submitting you agree to our terms.",
+    null,
+  ],
   ["What is your tech stack?", "", null],
   ["Why now?", "", null],
   ["What stage are you at?", "", null],
@@ -43,7 +47,7 @@ const cases: Array<[string, string, string | null, FieldKind?]> = [
 
 describe("classifyField", () => {
   it.each(cases)("%s -> %s", (label, help, category, kind) => {
-    const c = classifyField({ label, help, kind });
+    const c = classifyField({ label, help, ...(kind ? { kind } : {}) });
     expect(c.category).toBe(category);
     expect(c.sensitive).toBe(category !== null);
     if (category) expect(c.reason).toBeTruthy();

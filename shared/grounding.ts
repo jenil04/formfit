@@ -21,7 +21,7 @@ const MULTIPLIER: Record<string, number> = {
 export function extractNumbers(text: string): number[] {
   const out: number[] = [];
   for (const m of text.matchAll(NUMBER_RE)) {
-    const whole = m[1].replace(/,/g, "");
+    const whole = (m[1] ?? "0").replace(/,/g, "");
     const frac = m[2] ?? "";
     let value = Number(whole + frac);
     const suffix = (m[3] ?? "").toLowerCase();
@@ -43,7 +43,7 @@ export function findUngroundedNumbers(
   const known = new Set<number>([...extractNumbers(corpus), ...allow]);
   const ungrounded: string[] = [];
   for (const m of answer.matchAll(NUMBER_RE)) {
-    const whole = m[1].replace(/,/g, "");
+    const whole = (m[1] ?? "0").replace(/,/g, "");
     const frac = m[2] ?? "";
     let value = Number(whole + frac);
     const suffix = (m[3] ?? "").toLowerCase();

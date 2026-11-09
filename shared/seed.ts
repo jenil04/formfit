@@ -22,7 +22,11 @@ export const SEED_BANK: SeedEntry[] = [
       "Tidewell turns the supplier emails, texts and voicemails a restaurant already receives into ready-to-send purchase orders, so owners stop re-typing orders at 11pm.",
     facts: [
       { key: "company", value: "Tidewell", source: "Company name" },
-      { key: "category", value: "Back-office automation for independent restaurants", source: "Positioning doc" },
+      {
+        key: "category",
+        value: "Back-office automation for independent restaurants",
+        source: "Positioning doc",
+      },
     ],
   },
   {
@@ -31,7 +35,13 @@ export const SEED_BANK: SeedEntry[] = [
     title: "Problem",
     answer:
       "Independent restaurant owners and kitchen managers order from five to fifteen suppliers, and each supplier wants orders a different way: a WhatsApp message, an email, a call, a portal login. Orders live in a notebook, a camera roll and the owner's head. Mistakes mean missing produce on a Saturday, double deliveries and invoices nobody can reconcile. The people doing this work are the owner and the head chef, after service, unpaid. Existing procurement tools ask every supplier to change how they work, so small suppliers ignore them.",
-    facts: [{ key: "customer", value: "Owner-operators and head chefs at independent restaurants", source: "Customer interviews" }],
+    facts: [
+      {
+        key: "customer",
+        value: "Owner-operators and head chefs at independent restaurants",
+        source: "Customer interviews",
+      },
+    ],
   },
   {
     id: "bank_solution",
@@ -61,8 +71,16 @@ export const SEED_BANK: SeedEntry[] = [
     answer:
       "Asha Rivera (CEO) spent six years in restaurant operations, most recently running purchasing for a three-location group. Leo Tanaka (CTO) is a backend engineer who built supplier and logistics integrations at a food-distribution software company. We are two full-time founders plus one part-time product designer, and we have worked together since early 2026.",
     facts: [
-      { key: "founders", value: "Asha Rivera (CEO), Leo Tanaka (CTO)", source: "Team page" },
-      { key: "team size", value: "2 full-time founders and 1 part-time designer", source: "Team page" },
+      {
+        key: "founders",
+        value: "Asha Rivera (CEO), Leo Tanaka (CTO)",
+        source: "Team page",
+      },
+      {
+        key: "team size",
+        value: "2 full-time founders and 1 part-time designer",
+        source: "Team page",
+      },
     ],
   },
   {
@@ -99,18 +117,42 @@ export const SEED_BANK: SeedEntry[] = [
     title: "Tech stack",
     answer:
       "TypeScript end to end: React front end, Node services, Postgres. Claude models extract order lines from messy supplier messages, with deterministic validation against each supplier's catalogue. Orders go out over the WhatsApp Business API, SMTP and Twilio SMS. Hosted on managed Postgres and a container platform.",
-    facts: [{ key: "stack", value: "TypeScript, React, Node, Postgres, Claude, WhatsApp Business API, Twilio", source: "Engineering README" }],
+    facts: [
+      {
+        key: "stack",
+        value:
+          "TypeScript, React, Node, Postgres, Claude, WhatsApp Business API, Twilio",
+        source: "Engineering README",
+      },
+    ],
   },
   {
     id: "bank_links",
     topic: "links",
     title: "Links and contact",
-    answer: "Tidewell website, demo video, code repository and primary contact.",
+    answer:
+      "Tidewell website, demo video, code repository and primary contact.",
     facts: [
-      { key: "website", value: "https://tidewell.example", source: "Company site" },
-      { key: "demo video", value: "https://tidewell.example/demo", source: "Company site" },
-      { key: "github", value: "https://github.com/tidewell-demo/tidewell", source: "Repo" },
-      { key: "contact email", value: "asha@tidewell.example", source: "Team page" },
+      {
+        key: "website",
+        value: "https://tidewell.example",
+        source: "Company site",
+      },
+      {
+        key: "demo video",
+        value: "https://tidewell.example/demo",
+        source: "Company site",
+      },
+      {
+        key: "github",
+        value: "https://github.com/tidewell-demo/tidewell",
+        source: "Repo",
+      },
+      {
+        key: "contact email",
+        value: "asha@tidewell.example",
+        source: "Team page",
+      },
     ],
   },
   {
@@ -120,9 +162,17 @@ export const SEED_BANK: SeedEntry[] = [
     answer:
       "Tidewell Labs was founded in March 2026 and is based in Lisbon, Portugal. Stage: pilot with paying customers.",
     facts: [
-      { key: "legal name", value: "Tidewell Labs", source: "Incorporation docs" },
+      {
+        key: "legal name",
+        value: "Tidewell Labs",
+        source: "Incorporation docs",
+      },
       { key: "founded", value: "March 2026", source: "Incorporation docs" },
-      { key: "location", value: "Lisbon, Portugal", source: "Incorporation docs" },
+      {
+        key: "location",
+        value: "Lisbon, Portugal",
+        source: "Incorporation docs",
+      },
       { key: "stage", value: "Pilot with customers", source: "Pilot tracker" },
     ],
   },

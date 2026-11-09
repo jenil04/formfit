@@ -20,7 +20,10 @@ describe("extractLimit", () => {
   });
 
   it("returns nothing when there is no limit", () => {
-    expect(extractLimit("Company name")).toMatchObject({ chars: null, words: null });
+    expect(extractLimit("Company name")).toMatchObject({
+      chars: null,
+      words: null,
+    });
   });
 });
 
@@ -42,18 +45,31 @@ Launched
 `);
     expect(f.title).toBe("Seed Sprint Application");
     const byLabel = Object.fromEntries(f.fields.map((x) => [x.label, x]));
-    expect(byLabel["Company name"].required).toBe(true);
-    expect(byLabel["One-liner"]).toMatchObject({ charLimit: 120, required: true, kind: "short" });
-    const big = f.fields.find((x) => x.label.startsWith("What are you building"))!;
-    expect(big).toMatchObject({ charLimit: 600, kind: "long", required: false });
+    expect(byLabel["Company name"]!.required).toBe(true);
+    expect(byLabel["One-liner"]).toMatchObject({
+      charLimit: 120,
+      required: true,
+      kind: "short",
+    });
+    const big = f.fields.find((x) =>
+      x.label.startsWith("What are you building"),
+    )!;
+    expect(big).toMatchObject({
+      charLimit: 600,
+      kind: "long",
+      required: false,
+    });
     expect(big.help).toContain("concrete");
-    expect(byLabel["Website URL"].kind).toBe("url");
-    expect(byLabel["Your email"].kind).toBe("email");
-    expect(byLabel["Stage"]).toMatchObject({ kind: "select", options: ["Idea", "MVP", "Launched"] });
+    expect(byLabel["Website URL"]!.kind).toBe("url");
+    expect(byLabel["Your email"]!.kind).toBe("email");
+    expect(byLabel["Stage"]).toMatchObject({
+      kind: "select",
+      options: ["Idea", "MVP", "Launched"],
+    });
   });
 
   it("parses the Lumen sample", () => {
-    const f = parseFormText(SAMPLE_FORMS[0].text);
+    const f = parseFormText(SAMPLE_FORMS[0]!.text);
     expect(f.title).toMatch(/Lumen Accelerator/);
     expect(f.fields.map((x) => x.label)).toEqual([
       "Company name",
@@ -74,30 +90,102 @@ Launched
       "I agree to the Lumen Accelerator terms and conditions",
     ]);
     const l = Object.fromEntries(f.fields.map((x) => [x.label, x]));
-    expect(l["Describe your company in one sentence."]).toMatchObject({ charLimit: 140, required: true, kind: "short" });
-    expect(l["What problem are you solving, and for whom?"]).toMatchObject({ charLimit: 500, required: true, kind: "long" });
-    expect(l["Describe your traction to date."]).toMatchObject({ charLimit: 300, kind: "long" });
-    expect(l["Who is on your founding team?"].charLimit).toBe(400);
+    expect(l["Describe your company in one sentence."]).toMatchObject({
+      charLimit: 140,
+      required: true,
+      kind: "short",
+    });
+    expect(l["What problem are you solving, and for whom?"]).toMatchObject({
+      charLimit: 500,
+      required: true,
+      kind: "long",
+    });
+    expect(l["Describe your traction to date."]).toMatchObject({
+      charLimit: 300,
+      kind: "long",
+    });
+    expect(l["Who is on your founding team?"]!.charLimit).toBe(400);
     expect(l["Why now?"]).toMatchObject({ charLimit: 300, required: true });
-    expect(l["What is your tech stack?"].charLimit).toBe(200);
-    expect(l["What is your current monthly recurring revenue (USD)?"].kind).toBe("number");
+    expect(l["What is your tech stack?"]!.charLimit).toBe(200);
+    expect(
+      l["What is your current monthly recurring revenue (USD)?"]!.kind,
+    ).toBe("number");
     expect(l["Current stage"]).toMatchObject({
       kind: "select",
-      options: ["Idea", "Prototype", "Pilot with customers", "Generating revenue"],
+      options: [
+        "Idea",
+        "Prototype",
+        "Pilot with customers",
+        "Generating revenue",
+      ],
     });
-    expect(l["Primary contact email"].kind).toBe("email");
-    expect(l["I agree to the Lumen Accelerator terms and conditions"].kind).toBe("checkbox");
+    expect(l["Primary contact email"]!.kind).toBe("email");
+    expect(
+      l["I agree to the Lumen Accelerator terms and conditions"]!.kind,
+    ).toBe("checkbox");
   });
 
   it("parses the Northwind sample with word limits", () => {
-    const f = parseFormText(SAMPLE_FORMS[1].text);
+    const f = parseFormText(SAMPLE_FORMS[1]!.text);
     expect(f.fields).toHaveLength(16);
     const l = Object.fromEntries(f.fields.map((x) => [x.label, x]));
     expect(l["Tagline"]).toMatchObject({ charLimit: 80, required: true });
-    expect(l["What does your project do?"]).toMatchObject({ charLimit: 1000, kind: "long" });
-    expect(l["What makes your approach different from existing tools?"]).toMatchObject({ wordLimit: 100, charLimit: null });
-    expect(l["Demo video URL"].kind).toBe("url");
-    expect(l["GitHub repository URL"].kind).toBe("url");
-    expect(l["Team members and roles"].charLimit).toBe(300);
+    expect(l["What does your project do?"]).toMatchObject({
+      charLimit: 1000,
+      kind: "long",
+    });
+    expect(
+      l["What makes your approach different from existing tools?"],
+    ).toMatchObject({ wordLimit: 100, charLimit: null });
+    expect(l["Demo video URL"]!.kind).toBe("url");
+    expect(l["GitHub repository URL"]!.kind).toBe("url");
+    expect(l["Team members and roles"]!.charLimit).toBe(300);
+  });
+});
+
+describe("messy real-world paste", () => {
+  it("handles step markers, bare stars, inline help after a question, dropdown hints", () => {
+    const f = parseFormText(`Cedar Fund — Founder Grant 2026
+ Step 2 of 4
+Startup name*
+ Tell us what you do in a sentence (Max. 200 chars)*
+What's your biggest milestone so far? Please share evidence.
+(Maximum 350 characters)  Required
+Website
+Founder email address *
+How many customers do you have today?
+Preferred payout method
+-- Select --
+Bank transfer
+PayPal
+Back
+Next`);
+    expect(f.title).toBe("Cedar Fund — Founder Grant 2026");
+    expect(f.fields.map((x) => x.label)).toEqual([
+      "Startup name",
+      "Tell us what you do in a sentence",
+      "What's your biggest milestone so far?",
+      "Website",
+      "Founder email address",
+      "How many customers do you have today?",
+      "Preferred payout method",
+    ]);
+    const by = Object.fromEntries(f.fields.map((x) => [x.label, x]));
+    expect(by["Startup name"]!.required).toBe(true);
+    expect(by["Tell us what you do in a sentence"]).toMatchObject({
+      charLimit: 200,
+      required: true,
+    });
+    expect(by["What's your biggest milestone so far?"]).toMatchObject({
+      charLimit: 350,
+      required: true,
+    });
+    expect(by["What's your biggest milestone so far?"]!.help).toMatch(
+      /share evidence/,
+    );
+    expect(by["Preferred payout method"]).toMatchObject({
+      kind: "select",
+      options: ["Bank transfer", "PayPal"],
+    });
   });
 });

@@ -21,7 +21,12 @@ export interface Classification {
 interface Rule {
   category: SensitiveCategory;
   reason: string;
-  test: (text: string, raw: string, kind?: FieldKind, label?: string) => boolean;
+  test: (
+    text: string,
+    raw: string,
+    kind?: FieldKind,
+    label?: string,
+  ) => boolean;
 }
 
 const re = (pattern: RegExp) => (text: string) => pattern.test(text);
@@ -40,7 +45,8 @@ const RULES: Rule[] = [
   },
   {
     category: "bank-card",
-    reason: "Bank and card details are never stored or drafted. Enter them yourself.",
+    reason:
+      "Bank and card details are never stored or drafted. Enter them yourself.",
     test: re(
       /\b(bank (account|name|details)|account number|routing number|iban|swift|bic code|sort code|ifsc|card number|credit card|debit card|cvv|paypal|wire (details|instructions))\b/,
     ),
@@ -74,7 +80,8 @@ const RULES: Rule[] = [
   },
   {
     category: "references",
-    reason: "Reference contact details belong to other people. You supply them.",
+    reason:
+      "Reference contact details belong to other people. You supply them.",
     test: (text) =>
       /\b(references?|referees?|referrer)\b/.test(text) &&
       /\b(contact|email|e-mail|phone|name|details|linkedin)\b/.test(text),
@@ -93,7 +100,8 @@ const RULES: Rule[] = [
   },
   {
     category: "investment-terms",
-    reason: "Equity and investment terms are your decision, not something to draft.",
+    reason:
+      "Equity and investment terms are your decision, not something to draft.",
     test: re(
       /\b(equity|valuation|safe note|convertible note|cap table|dilution|ownership (percentage|stake)|stake|investment (amount|terms)|terms of (the )?(investment|deal)|funding (ask|amount|requested)|amount (requested|raising)|how much (are you )?(raising|asking)|round size|raising|funding (are you )?(seeking|requesting)|how much (funding|money|capital)|seeking (funding|investment)|pre-?money|post-?money|discount rate)\b/,
     ),
@@ -112,8 +120,8 @@ const RULES: Rule[] = [
 
 export function classifyField(input: {
   label: string;
-  help?: string;
-  kind?: FieldKind;
+  help?: string | undefined;
+  kind?: FieldKind | undefined;
 }): Classification {
   const raw = `${input.label} ${input.help ?? ""}`;
   const text = raw.toLowerCase();

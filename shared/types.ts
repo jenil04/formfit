@@ -25,7 +25,7 @@ export type FormStatus = (typeof FORM_STATUSES)[number];
 export interface BankFact {
   key: string;
   value: string;
-  source?: string;
+  source?: string | undefined;
 }
 
 export interface Provenance {

@@ -80,7 +80,8 @@ export function hardTrim(text: string, limits: Limits): string {
     window.lastIndexOf("! "),
     window.lastIndexOf("? "),
   );
-  if (sentenceEnd >= limit * 0.5) return window.slice(0, sentenceEnd + 1).trim();
+  if (sentenceEnd >= limit * 0.5)
+    return window.slice(0, sentenceEnd + 1).trim();
   if (/[.!?]$/.test(window) && window.length <= limit) {
     // window ended exactly on a sentence terminator
     return window.trim();

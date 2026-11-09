@@ -18,13 +18,19 @@ export interface NavigationState {
   path?: string;
   publicPath?: string;
   threadId?: string;
+  /** Formfit: the open form and the selected field, so the agent knows "this one". */
+  formId?: string;
+  fieldId?: string;
 }
 
 export function useNavigationState() {
   useAgentRouteState<NavigationState>({
     browserTabId: TAB_ID,
     requestSource: TAB_ID,
-    getNavigationState: ({ pathname }) => navigationStateForPath(pathname),
+    getNavigationState: ({ pathname, searchParams }) => ({
+      ...navigationStateForPath(pathname),
+      ...(searchParams.get("field") ? { fieldId: searchParams.get("field")! } : {}),
+    }),
     getCommandPath: commandPathForNavigation,
   });
 }
@@ -64,8 +70,10 @@ function matchesPathPrefix(pathname: string, prefix: string): boolean {
 
 export function navigationStateForPath(pathname: string): NavigationState {
   const threadId = threadIdFromPath(pathname);
+  const formId = pathname.match(/^\/fit\/([^/?#]+)/)?.[1];
   return {
     view: viewForPath(pathname),
+    ...(formId ? { formId } : {}),
     path: pathname,
     publicPath: appPathFromLocalRoute(pathname),
     ...(threadId ? { threadId } : {}),
@@ -74,6 +82,7 @@ export function navigationStateForPath(pathname: string): NavigationState {
 
 function viewForPath(pathname: string): string {
   if (isChatPathname(pathname)) return "chat";
+  if (pathname.startsWith("/fit")) return "fit";
   if (pathname === HOME_PATH) return "home";
   if (pathname.startsWith("/database")) return "database";
   if (pathname.startsWith("/extensions")) return "extensions";
@@ -91,6 +100,8 @@ function pathForView(view?: string): string {
     case "chat":
     case "ask":
       return NEW_CHAT_PATH;
+    case "fit":
+      return "/fit";
     case "home":
       return HOME_PATH;
     case "database":
