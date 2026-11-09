@@ -24,8 +24,9 @@ if [ -z "${BETTER_AUTH_SECRET:-}" ]; then
   export BETTER_AUTH_SECRET
 fi
 
-# Rebuild when there is no build or any source is newer than it.
-if [ ! -d build ] || [ -n "$(find app server actions shared -type f -newer build 2>/dev/null | head -1)" ]; then
+# Rebuild when there is no build, or any source is newer than the built server.
+BUILT=.output/server/index.mjs
+if [ ! -f "$BUILT" ] || [ -n "$(find app server actions shared agent-native.config.ts package.json -type f -newer "$BUILT" 2>/dev/null | head -1)" ]; then
   pnpm build
 fi
 

@@ -177,29 +177,27 @@ export async function draftField(
 
   let parsed: ModelDraft | null = null;
   let problem: string | null = null;
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const raw = await ask(GUARDRAIL_RULES, buildInput(problem ?? undefined));
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const raw = await ask(
+      GUARDRAIL_RULES,
+      buildInput(problem ?? undefined),
+      1200,
+    );
     parsed = extractJson<ModelDraft>(raw);
     problem = null;
     if (!parsed) {
       problem = "Reply was not valid JSON";
-      continue;
-    }
-    if (parsed.status === "needs_you" || !parsed.answer?.trim()) {
+    } else if (parsed.status === "needs_you" || !parsed.answer?.trim()) {
       return needsYou(
         parsed.reason?.trim() || "Nothing in your bank covers this field",
       );
+    } else {
+      problem = validateDraft(field, parsed.answer, corpus);
     }
-    problem = validateDraft(field, parsed.answer, corpus);
     if (!problem) break;
-    if (
-      field.kind === "select" ||
-      field.kind === "url" ||
-      field.kind === "email"
-    ) {
-      // Not worth a retry loop for exact-value kinds beyond the first feedback pass.
-      continue;
-    }
+    console.warn(
+      `[formfit] draft attempt ${attempt + 1} rejected for "${field.label}": ${problem}`,
+    );
   }
   if (!parsed || problem) {
     return needsYou(

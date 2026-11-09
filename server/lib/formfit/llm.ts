@@ -42,14 +42,49 @@ export async function ask(
   return result.text;
 }
 
-/** Pull the first JSON object out of a model reply, tolerating code fences. */
+/**
+ * Models sometimes put raw newlines/tabs inside a JSON string (paragraph breaks
+ * in a long answer), which JSON.parse rejects. Escape them inside strings only.
+ */
+export function escapeControlCharsInStrings(json: string): string {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+  for (const ch of json) {
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        out += ch;
+      } else if (ch === "\\") {
+        escaped = true;
+        out += ch;
+      } else if (ch === '"') {
+        inString = false;
+        out += ch;
+      } else if (ch === "\n") out += "\\n";
+      else if (ch === "\r") out += "";
+      else if (ch === "\t") out += "\\t";
+      else out += ch;
+    } else {
+      if (ch === '"') inString = true;
+      out += ch;
+    }
+  }
+  return out;
+}
+
+/** Pull the first JSON object out of a model reply, tolerating code fences and raw newlines in strings. */
 export function extractJson<T>(text: string): T | null {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
   if (start < 0 || end <= start) return null;
-  try {
-    return JSON.parse(text.slice(start, end + 1)) as T;
-  } catch {
-    return null;
+  const body = text.slice(start, end + 1);
+  for (const candidate of [body, escapeControlCharsInStrings(body)]) {
+    try {
+      return JSON.parse(candidate) as T;
+    } catch {
+      // try the next candidate
+    }
   }
+  return null;
 }
